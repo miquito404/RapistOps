@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rapistops"
-version = "0.1.0"
+version = "0.1.0.dev1"
 description = "A system designed to make sexual violence harder to hide. It connects publicly available reports, records, evidence, people, cases, and institutions so information that might otherwise disappear can be found, connected, and tracked."
 requires-python = ">=3.12,<3.13"
 

@@ -58,7 +58,7 @@ The initial pipeline is:
 Volume 1 will establish the foundation needed for the larger RapistOps system without attempting to implement the entire long-term vision at once.
 
 ## Technology
-Initial technology stack:
+Planned technology stack; some components are not implemented in this preview:
 - Python 3.12
 - PostgreSQL
 - FastAPI
@@ -86,8 +86,47 @@ The project follows a roadmap-driven approach:
 4. Expand only when the requirements call for it.
 
 ## Status
-**Version:** 0.1.0
-**Development status:** Early development
+**Version:** 0.1.0.dev1
+**Development status:** v0.1.0-dev.1 Developer Preview
+
+## Developer Preview
+This preview provides ten core Python models, ten PostgreSQL tables and save
+functions, reproducible local database setup, isolated serial database tests,
+and a GitHub Actions test workflow on Python 3.12.
+
+Source importers, search, an API, a web UI, migrations, and production access
+controls remain future work. Status and Relationship entity IDs currently have
+no foreign-key enforcement. Use synthetic data when evaluating this preview.
+
+Run these commands from the repository root after activating a Python 3.12
+virtual environment. See the [local database guide](docs/local_database.md)
+for environment setup and the PowerShell equivalent of the test URL setting.
+
+```sh
+python -m pip install -e ".[dev]"
+python -c "from importlib.metadata import version; assert version('rapistops') == '0.1.0.dev1'"
+python -m pytest -m "not database" -q
+
+docker compose --profile tests up -d --wait --wait-timeout 120 db-test
+export RAPISTOPS_TEST_DATABASE_URL='postgresql://rapistops_test:rapistops_tests_only@127.0.0.1:55433/rapistops_test'
+python -m pytest --run-database -m database -q
+
+docker compose --profile tests stop db-test
+```
+
+Database tests are opt-in and require the separate `rapistops_test` database on
+a loopback endpoint. The test URL must differ from `RAPISTOPS_DATABASE_URL`;
+there is no fallback to the development URL. Keep the development URL unset
+or pointing to your normal development database. Fixtures temporarily route
+storage calls to the test database, reset its tables before and after each test,
+and restore the original environment afterward. Run database tests serially.
+
+CI runs on pushes and pull requests using the same install and test commands
+and the same Compose test service. It collects PostgreSQL logs on failure and
+always runs `docker compose --profile tests down -v` to remove its disposable
+database. This CI cleanup runs on a fresh runner. Locally, stopping `db-test`
+discards its temporary in-memory test database; the normal development database
+uses the separate `db` service and persistent `postgres_data` volume.
 
 ## Project Structure
 RapistOps/
