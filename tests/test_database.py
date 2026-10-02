@@ -1,10 +1,9 @@
-from rapistops.database import get_connection
+import pytest
 
 
-def test_database_connection():
-    connection = get_connection()
+pytestmark = pytest.mark.database
 
-    try:
-        assert connection is not None
-    finally:
-        connection.close()
+
+def test_database_connection(database_connection):
+    assert database_connection.execute("SELECT 1").fetchone() == (1,)
+    assert database_connection.execute("SELECT current_database()").fetchone() == ("rapistops_test",)

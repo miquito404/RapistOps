@@ -102,8 +102,69 @@ Run the database-free configuration tests:
 python -m pytest tests/test_database_configuration.py -q
 ```
 
-Existing database/storage tests still have fixture and cleanup defects. This
-setup does not fix those tests or make running them against valuable data safe.
+## Run isolated PostgreSQL tests
+
+Start only the dedicated test service:
+
+```text
+docker compose --profile tests up -d --wait --wait-timeout 120 db-test
+```
+
+This separate PostgreSQL instance uses database `rapistops_test`, host port
+`55433`, and temporary in-memory storage. It does not use the development
+database or its volume. Stopping the test container discards its database.
+The existing schema is initialized automatically when the container starts.
+
+Set the test URL in PowerShell:
+
+```powershell
+$env:RAPISTOPS_TEST_DATABASE_URL = "postgresql://rapistops_test:rapistops_tests_only@127.0.0.1:55433/rapistops_test"
+```
+
+Or in a POSIX shell:
+
+```sh
+export RAPISTOPS_TEST_DATABASE_URL='postgresql://rapistops_test:rapistops_tests_only@127.0.0.1:55433/rapistops_test'
+```
+
+The guard requires database name `rapistops_test`, an explicit user, and a local
+loopback endpoint. It rejects a test URL equal to `RAPISTOPS_DATABASE_URL`.
+There is no fallback to the development URL. Keep `RAPISTOPS_DATABASE_URL`
+unset or pointing to your normal development database; the fixture temporarily
+overrides it only while a database test runs and restores it afterward.
+
+Run database-free tests, including the safety-guard checks:
+
+```text
+python -m pytest -m "not database" -q
+```
+
+Explicitly enable the PostgreSQL tests:
+
+```text
+python -m pytest --run-database -m database -q
+```
+
+Without `--run-database`, live tests are skipped. When explicitly enabled,
+missing or unsafe test configuration fails before database setup. Each live
+test starts with all ten tables empty. Its requested parent fixtures create
+the needed rows, and teardown resets those tables even after an assertion
+fails. Connections are closed before reset; storage functions' independent
+commits are covered by the reset. A deliberate-failure regression verifies
+cleanup of a committed insert. A killed process can leave temporary test rows;
+the next test run clears them before use.
+
+Run these database tests serially. Concurrent runs or parallel pytest workers
+sharing this test database are outside the Developer Preview scope.
+
+Stop only the disposable test service:
+
+```text
+docker compose --profile tests stop db-test
+```
+
+This permanently discards the test database's temporary contents. It does not
+stop or remove the normal development database.
 
 ## Stop or initialize from scratch
 

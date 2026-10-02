@@ -19,5 +19,25 @@ services:
       retries: 30
       start_period: 5s
 
+  db-test:
+    profiles: ["tests"]
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: rapistops_test
+      POSTGRES_USER: rapistops_test
+      POSTGRES_PASSWORD: rapistops_tests_only
+    ports:
+      - "127.0.0.1:55433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./data/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "rapistops_test", "-d", "rapistops_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
 volumes:
   postgres_data:

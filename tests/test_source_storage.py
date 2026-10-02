@@ -1,15 +1,16 @@
+import pytest
+
 from rapistops.source import Source
 from rapistops.source_storage import save_source
+from tests.database_helpers import assert_persisted, snapshot_model
 
 
-def test_save_source():
-    source = Source(
-        id=1,
-        name="Test Source",
-        type="public_record",
-        organization="Test Organization",
-        location="Test Location",
-        access_reference="test-reference",
-    )
+pytestmark = pytest.mark.database
 
+
+def test_save_source(database_connection):
+    source = Source(101, "Test Source", "public_record", "Test Organization",
+                    "Test Location", "test-reference")
+    expected = snapshot_model(source, ())
     save_source(source)
+    assert_persisted(database_connection, "source", expected)

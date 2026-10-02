@@ -1,42 +1,16 @@
-from rapistops.source import Source
-from rapistops.source_storage import save_source
-from rapistops.database import get_connection
+import pytest
+
+from rapistops.record import Record
+from rapistops.record_storage import save_record
+from tests.database_helpers import assert_persisted, snapshot_model
 
 
-def test_save_source():
-    source = Source(
-        id=1,
-        name="Test Source",
-        type="public_record",
-        organization="Test Organization",
-        location="Test Location",
-        access_reference="test-reference",
-    )
+pytestmark = pytest.mark.database
 
-    connection = get_connection()
 
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM source WHERE id = %s",
-                (source.id,),
-            )
-
-        connection.commit()
-    finally:
-        connection.close()
-
-    save_source(source)
-
-    connection = get_connection()
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM source WHERE id = %s",
-                (source.id,),
-            )
-
-        connection.commit()
-    finally:
-        connection.close()
+def test_save_record(database_connection, source, provenance):
+    record = Record(303, source.id, provenance.id, "report", "Test Record",
+                    "record-test-reference", "2026-09-28", "2026-09-29", "2026-09-30")
+    expected = snapshot_model(record, ("created_at", "published_at", "collected_at"))
+    save_record(record)
+    assert_persisted(database_connection, "record", expected)
