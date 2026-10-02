@@ -128,6 +128,33 @@ database. This CI cleanup runs on a fresh runner. Locally, stopping `db-test`
 discards its temporary in-memory test database; the normal development database
 uses the separate `db` service and persistent `postgres_data` volume.
 
+### Synthetic persistence demo
+After installing the package, start and configure the local development database
+using the [local database guide](docs/local_database.md). Run from the repository
+root with `RAPISTOPS_DATABASE_URL` set to the development URL:
+
+```text
+python examples/synthetic_persistence.py
+```
+
+The demo uses the existing save functions to persist entirely fabricated Source,
+Provenance, Record, and Evidence objects with distinct IDs `-100001` through
+`-100004`. It reads back every field and joins the tables to verify their references.
+A first run against a database without these demo rows prints:
+
+```text
+SYNTHETIC DEMO: created=4 reused=0
+Verified synthetic chain: Source(-100001) -> Provenance(-100002) -> Record(-100003) -> Evidence(-100004)
+```
+
+A second run prints `created=0 reused=4` and the same verified chain. Matching
+rows are reused; matching partial state is completed. All four IDs are checked
+before any writes. A conflicting row causes a non-zero exit without new writes;
+readback or reference verification failure also exits non-zero without printing
+success. The demo never deletes or resets data, and leaves its four synthetic rows
+available for inspection. Run it serially. Each save commits independently, so an
+interrupted run can leave matching partial state that a later run completes.
+
 ## Project Structure
 RapistOps/
     src/
