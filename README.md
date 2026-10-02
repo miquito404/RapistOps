@@ -76,6 +76,9 @@ Additional technologies may be introduced when the project's requirements justif
 ## Development
 RapistOps is being developed incrementally.
 
+For PostgreSQL setup and connection configuration, see the
+[local development database guide](docs/local_database.md).
+
 The project follows a roadmap-driven approach:
 1. Define the complete system in the Master Roadmap.
 2. Define the bounded Volume 1 scope.
